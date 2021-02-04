@@ -1,4 +1,4 @@
-import React, { useState, FormEvent } from 'react';
+import React, { useState, FormEvent, useEffect } from 'react';
 
 // importação dos icones no react
 import { FiChevronRight } from 'react-icons/fi';
@@ -24,7 +24,28 @@ interface Repository {
 const Dashboard: React.FC = () => {
   const [newRepo, setNewRepo] = useState('');
   const [error, setError] = useState('');
-  const [repostiories, setRepositories] = useState<Repository[]>([]);
+
+  // usa um valor padrao para os repositorios
+  const [repositories, setRepositories] = useState<Repository[]>(() => {
+    const storageRepostitories = localStorage.getItem(
+      '@github-explorer:repositories',
+    );
+
+    if (storageRepostitories) {
+      return JSON.parse(storageRepostitories);
+    }
+
+    return [];
+  });
+
+  // Quando houver uma mudança na variável repositories
+  // executa a função e guarda no local estorage
+  useEffect(() => {
+    localStorage.setItem(
+      '@github-explorer:repositories',
+      JSON.stringify(repositories),
+    );
+  }, [repositories]);
 
   /**
    * Função para manipulação da ação de adicionar um novo repositório.
@@ -41,7 +62,7 @@ const Dashboard: React.FC = () => {
     try {
       const response = await api.get<Repository>(`/repos/${newRepo}`);
       const repository = response.data;
-      setRepositories([...repostiories, repository]);
+      setRepositories([...repositories, repository]);
 
       setError('');
       setNewRepo('');
@@ -70,7 +91,7 @@ const Dashboard: React.FC = () => {
       <Error>{error}</Error>
 
       <Repositories>
-        {repostiories.map(repository => (
+        {repositories.map(repository => (
           <a href="teste" key={repository.full_name}>
             <img
               src={repository.owner.avatar_url}
